@@ -1,21 +1,10 @@
 'use server'
-import { parse } from 'date-fns';
+import { CalendarEvent } from './getCalendarEvents';
 
 // export const dynamic = 'force-status'
 // export const revalidate = false
 // export const fetchCache = 'force-cache'
 
-export interface CalendarEvent {
-  title: string;
-  description: string;
-  location: string;
-  date: Date;
-  startTime: string | null;
-  endTime: string | null;
-  startDateTime: Date | null;
-  endDateTime: Date | null;
-  url: string;
-}
 
 function parseICSDate(dateStr: string): Date {
   // Format: YYYYMMDD (all-day events)
@@ -111,3 +100,5 @@ export async function fetchAndParseICS(url: string): Promise<CalendarEvent[]> {
   const icsContent = await response.text();
   return parseICS(icsContent);
 }
+
+// https://developers.facebook.com/docs/graph-api/reference/v24.0/group/feed

@@ -25,7 +25,7 @@ export interface CalendarEvent {
   startDateTime: Date | null;
   endDateTime: Date | null;
   url: string;
-  source: string; // Which feed this came from
+  source?: string; // Which feed this came from
 }
 
 interface TimeRange {
