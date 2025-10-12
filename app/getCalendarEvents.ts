@@ -55,11 +55,11 @@ interface RSSFeed {
  */
 export async function fetchRSSFeed(url: string): Promise<string> {
   const response = await fetch(url, {
-    cache: 'no-store', // For Next.js dynamic data
+    cache: 'force-cache',
   });
   
   if (!response.ok) {
-    console.error({ url })
+    console.error({ url, statusText: response.statusText, v: response.json() })
     throw new Error(`Failed to fetch RSS feed: ${response.status}`);
   }
   
