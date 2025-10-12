@@ -59,6 +59,7 @@ export async function fetchRSSFeed(url: string): Promise<string> {
   });
   
   if (!response.ok) {
+    console.error({ url })
     throw new Error(`Failed to fetch RSS feed: ${response.status}`);
   }
   
