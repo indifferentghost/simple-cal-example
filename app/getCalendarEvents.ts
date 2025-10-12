@@ -1,23 +1,31 @@
 /**
  * RSS Feed to Calendar Events Converter
  * For Next.js with TypeScript and date-fns
+ * Supports multiple Arizona county/city calendar RSS feeds
  */
 
 import { parseStringPromise } from 'xml2js';
 import { parse, setHours, setMinutes } from 'date-fns';
 
-const RSS_FEED_URL = 'https://www.cochise.az.gov/RSSFeed.aspx?ModID=58&CID=All-calendar.xml';
+// Available RSS feeds
+export const RSS_FEEDS = {
+  cochise: 'https://www.cochise.az.gov/RSSFeed.aspx?ModID=58&CID=All-calendar.xml',
+  bisbee: 'https://www.bisbeeaz.gov/RSSFeed.aspx?ModID=1&CID=All-calendar.xml',
+} as const;
+
+export type FeedSource = keyof typeof RSS_FEEDS;
 
 export interface CalendarEvent {
   title: string;
   description: string;
   location: string;
-  date: Date;
+  date: string;
   startTime: string | null;
   endTime: string | null;
   startDateTime: Date | null;
   endDateTime: Date | null;
   url: string;
+  source: string; // Which feed this came from
 }
 
 interface TimeRange {
@@ -43,10 +51,10 @@ interface RSSFeed {
 }
 
 /**
- * Fetches the RSS feed
+ * Fetches the RSS feed from the given URL
  */
-export async function fetchRSSFeed(): Promise<string> {
-  const response = await fetch(RSS_FEED_URL, {
+export async function fetchRSSFeed(url: string): Promise<string> {
+  const response = await fetch(url, {
     cache: 'no-store', // For Next.js dynamic data
   });
   
@@ -95,7 +103,10 @@ function createDateTime(dateStr: string, timeStr: string | null): Date | null {
 /**
  * Parses XML and extracts calendar events
  */
-export async function parseRSSToEvents(xmlText: string): Promise<CalendarEvent[]> {
+export async function parseRSSToEvents(
+  xmlText: string,
+  source: string
+): Promise<CalendarEvent[]> {
   const result = await parseStringPromise(xmlText) as RSSFeed;
   
   const items = result.rss.channel[0].item || [];
@@ -115,12 +126,13 @@ export async function parseRSSToEvents(xmlText: string): Promise<CalendarEvent[]
       title,
       description: description.replace(/<[^>]*>/g, ''), // Strip HTML tags
       location: location.replace(/<br>/g, ', '),
-      date: new Date(eventDate),
+      date: eventDate,
       startTime: times.start,
       endTime: times.end,
       startDateTime: createDateTime(eventDate, times.start),
       endDateTime: createDateTime(eventDate, times.end),
       url: link,
+      source,
     };
     
     events.push(event);
@@ -130,9 +142,40 @@ export async function parseRSSToEvents(xmlText: string): Promise<CalendarEvent[]
 }
 
 /**
- * Main function to get calendar events
+ * Get calendar events from a specific feed source
  */
-export async function getCalendarEvents(): Promise<CalendarEvent[]> {
-  const xmlText = await fetchRSSFeed();
-  return await parseRSSToEvents(xmlText);
+export async function getCalendarEvents(
+  feedSource: FeedSource | string = 'cochise'
+): Promise<CalendarEvent[]> {
+  const url = typeof feedSource === 'string' && feedSource in RSS_FEEDS
+    ? RSS_FEEDS[feedSource as FeedSource]
+    : feedSource;
+  
+  const source = typeof feedSource === 'string' && feedSource in RSS_FEEDS
+    ? feedSource
+    : new URL(url).hostname;
+  
+  const xmlText = await fetchRSSFeed(url);
+  const events = await parseRSSToEvents(xmlText, source);
+  return events;
+}
+
+/**
+ * Get calendar events from all configured feeds
+ */
+export async function getAllCalendarEvents(): Promise<CalendarEvent[]> {
+  const feedPromises = Object.entries(RSS_FEEDS).map(([source, url]) =>
+    fetchRSSFeed(url)
+      .then(xmlText => parseRSSToEvents(xmlText, source))
+      .catch(error => {
+        console.error(`Error fetching ${source} feed:`, error);
+        return [];
+      })
+  );
+  
+  const allEvents = await Promise.all(feedPromises);
+  return allEvents.flat().sort((a, b) => {
+    if (!a.startDateTime || !b.startDateTime) return 0;
+    return a.startDateTime.getTime() - b.startDateTime.getTime();
+  });
 }
