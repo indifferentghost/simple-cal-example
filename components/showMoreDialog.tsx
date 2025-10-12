@@ -2,12 +2,19 @@
 import { XIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { CalendarEvent } from "~/app/getCalendarEvents";
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
 import { format } from "date-fns";
 
 export const ShowMoreDialog = ({ events }: { events: CalendarEvent[] }) => {
-
   const ref = useRef<HTMLDialogElement>(null);
+
+  const handleRefClick = useCallback(() => {
+    if (!ref.current) {
+      console.log('no ref connected')
+      return;
+    }
+    ref.current.showModal()
+  }, [ref.current])
 
   return <>
     <dialog ref={ref} className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 drop-shadow-lg backdrop:bg-gray-900/25">
@@ -28,7 +35,7 @@ export const ShowMoreDialog = ({ events }: { events: CalendarEvent[] }) => {
         </ul>
       </div>
     </dialog>
-    <Button className="mt-auto" onClick={ref.current?.showModal.bind(ref.current)} variant="ghost" size="sm">
+    <Button className="mt-auto" onClick={handleRefClick} variant="ghost" size="sm">
       Show more
     </Button>
   </>
