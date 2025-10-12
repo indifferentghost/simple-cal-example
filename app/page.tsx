@@ -1,103 +1,93 @@
-import Image from "next/image";
+import { eachDayOfInterval, endOfMonth, endOfWeek, format, getMonth, isSameDay, isToday, startOfMonth, startOfWeek } from "date-fns";
+import { getCalendarEvents } from "./getCalendarEvents";
+import { Badge } from "~/components/ui/badge";
+import { Card } from "~/components/ui/card";
+import { ChevronRightIcon, MapPin } from "lucide-react";
+import { scrapeCalendar } from "./sierraVistaCalendarEvents";
+import { Item, ItemActions, ItemContent, ItemTitle } from "~/components/ui/item";
+import { fetchAndParseICS } from "./getHeraldEvents";
+// import { ChevronLeft, ChevronRight, Calendar, MapPin, Users, Badge } from "lucide-react"
 
-export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+const useCal = (date = new Date()) => {
+  return {
+    days: eachDayOfInterval({ start: startOfMonth(date), end: endOfMonth(date) }),
+    month: format(date, 'MMMM'),
+    year: format(date, 'RRRR')
+  } as const;
+};
+
+
+// Array of ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const dayNames = ((date = new Date()) => eachDayOfInterval({ start: startOfWeek(date), end: endOfWeek(date) }).map((date) => format(date, 'EEEE')))()
+
+const DaysOfWeek = () => <div className="grid grid-cols-1 gap-px border-b border-border bg-border md:grid-cols-7">
+  {dayNames.map(day => {
+    return <div key={day} className="bg-muted px-4 py-4 text-center font-semibold text-muted-foreground md:py-6">
+      <span className="text-base md:text-lg lg:text-xl" aria-label={day}>
+        {day}
+      </span>
     </div>
-  );
+  })}
+</div>
+
+export default async function Home() {
+  const { days, month, year } = useCal();
+  const events = await getCalendarEvents();
+  const events4 = await getCalendarEvents('bisbee');
+  const events2 = await scrapeCalendar();
+  const events3 = await fetchAndParseICS('https://timelyapp.time.ly/api/calendars/54738062/export?format=ics&target=copy')
+
+  console.log(events3)
+
+  return (
+    <div className="rounded-xl border border-border bg-card shadow-lg">
+      <DaysOfWeek />
+      <div className="grid grid-cols-1 gap-px bg-border md:grid-cols-7">
+        {days.map((day, index) => {
+          const dayEvents = [
+            ...events.filter(event => isSameDay(event.date, day)),
+            ...events2.filter(event => isSameDay(event.date, day)),
+            ...events3.filter(event => isSameDay(event.date, day)),
+                        ...events4.filter(event => isSameDay(event.date, day)),
+          ];
+          return (
+            <div
+              key={index}
+              className={`min-h-[120px] bg-card p-3 md:min-h-[160px] lg:min-h-[200px] lg:p-4 ${!day ? "bg-muted/30" : ""
+                }`}
+              role={day ? "gridcell" : "presentation"}
+              aria-label={day ? `${[month]} ${day}, ${year}` : undefined}
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <span
+                  className={`flex h-10 w-10 items-center justify-center rounded-full text-xl font-bold md:h-12 md:w-12 md:text-2xl ${isToday(day) ? "bg-primary text-primary-foreground" : "text-foreground"
+                    }`}
+                >
+                  {format(day, 'd')}
+                </span>
+                {dayEvents.length > 0 && (
+                  <Badge variant="secondary" className="text-sm font-semibold">
+                    {dayEvents.length}
+                  </Badge>
+                )}
+              </div>
+
+
+              <div className="space-y-2">
+                  {dayEvents.map((event) => (
+                          <div>{event.title}</div>
+                  ))}
+              </div>
+
+
+
+
+            </div>
+          )
+        })}
+
+      </div>
+    </div>)
 }
