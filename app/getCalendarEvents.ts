@@ -19,7 +19,7 @@ export interface CalendarEvent {
   title: string;
   description: string;
   location: string;
-  date: string;
+  date: string | Date;
   startTime: string | null;
   endTime: string | null;
   startDateTime: Date | null;

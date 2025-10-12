@@ -36,7 +36,7 @@ export default async function Home() {
   const { days, month, year } = useCal();
   const events = await getCalendarEvents();
   const events4 = await getCalendarEvents('bisbee');
-  const events2 = await scrapeCalendar();
+  // const events2 = await scrapeCalendar();
   const events3 = await fetchAndParseICS('https://timelyapp.time.ly/api/calendars/54738062/export?format=ics&target=copy')
 
   console.log(events3)
@@ -48,9 +48,9 @@ export default async function Home() {
         {days.map((day, index) => {
           const dayEvents = [
             ...events.filter(event => isSameDay(event.date, day)),
-            ...events2.filter(event => isSameDay(event.date, day)),
+            // ...events2.filter(event => isSameDay(event.date, day)),
             ...events3.filter(event => isSameDay(event.date, day)),
-                        ...events4.filter(event => isSameDay(event.date, day)),
+            ...events4.filter(event => isSameDay(event.date, day)),
           ];
           return (
             <div
@@ -76,9 +76,9 @@ export default async function Home() {
 
 
               <div className="space-y-2">
-                  {dayEvents.map((event) => (
-                          <div>{event.title}</div>
-                  ))}
+                {dayEvents.map((event) => (
+                  <div>{event.title}</div>
+                ))}
               </div>
 
 
