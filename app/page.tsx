@@ -88,7 +88,7 @@ const Calendar = async ({ day, index }: { day: Date, index: number }) => {
 
       <ul className="space-y-1 list-none">
         {dayEvents.slice(0, 3).map((event, index) => (
-          <CalendarListItem title={event.title} key={`event-${index}`} />
+          <CalendarListItem url={event.url} title={event.title} key={`event-${index}`} />
         ))}
       </ul>
       {dayEvents.length > 3 ? (
