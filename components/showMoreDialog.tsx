@@ -2,18 +2,41 @@
 import { XIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { CalendarEvent } from "~/app/getCalendarEvents";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { format } from "date-fns";
+import { CalendarListItem } from "./calenderListItem";
 
 export const ShowMoreDialog = ({ events }: { events: CalendarEvent[] }) => {
   const ref = useRef<HTMLDialogElement>(null);
 
   const handleRefClick = useCallback(() => {
     if (!ref.current) {
-      console.log('no ref connected')
+      console.log('no ref connected for handleRefClick')
       return;
     }
     ref.current.showModal()
+  }, [ref.current]);
+
+  useEffect(() => {
+    if (!ref.current) {
+      console.log('no ref connected for outside click listener');
+      return
+    }
+    function handleOutsideClick(event: MouseEvent | TouchEvent) {
+      if (!ref.current || !ref.current.open) return;
+      if (event.target instanceof Node && event.target === ref.current) {
+        ref.current.close('dismiss')
+      }
+    }
+
+    document.addEventListener('mouseup', handleOutsideClick);
+    document.addEventListener('touchend', handleOutsideClick);
+
+
+    return () => {
+      document.removeEventListener('mouseup', handleOutsideClick);
+      document.removeEventListener('touchend', handleOutsideClick);
+    };
   }, [ref.current])
 
   return <>
@@ -29,9 +52,9 @@ export const ShowMoreDialog = ({ events }: { events: CalendarEvent[] }) => {
           </Button>
         </div>
         <ul className="space-y-0.5">
-          {events.map((event, index) => <li
-          className="hover:bg-gray-200/50 transition delay-50 duration-200 ease-in p-1"
-          key={`more-${index}`}>{event.title}</li>)}
+          {events.map((event, index) => (
+            <CalendarListItem url={event.url} title={event.title} key={`more-${index}`} />
+          ))}
         </ul>
       </div>
     </dialog>

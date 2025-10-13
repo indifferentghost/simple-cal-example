@@ -6,6 +6,7 @@ import { ShowMoreDialog } from "~/components/showMoreDialog";
 import { getCalendarEvents } from "./getCalendarEvents";
 import { fetchAndParseICS } from "./getHeraldEvents";
 import { cn } from "~/lib/utils";
+import { CalendarListItem } from "~/components/calenderListItem";
 
 const useCal = (date = new Date()) => {
   return {
@@ -65,7 +66,7 @@ const Calendar = async ({ day, index }: { day: Date, index: number }) => {
   const { month, year } = useCal(day)
   return (
     <div
-      key={index}
+      key={`day-${index}`}
       className={cn('min-h-[120px] bg-card p-3 md:min-h-[160px] lg:min-h-[200px] lg:p-4 flex flex-col', { "bg-muted/30": !day })}
       role={day ? "gridcell" : "presentation"}
       aria-label={day ? `${[month]} ${day}, ${year}` : undefined}
@@ -88,8 +89,8 @@ const Calendar = async ({ day, index }: { day: Date, index: number }) => {
 
 
       <ul className="space-y-1 list-none">
-        {dayEvents.slice(0, 3).map((event) => (
-          <li className="hover:bg-gray-200/50 transition delay-50 duration-200 ease-in p-0.5">{event.title}</li>
+        {dayEvents.slice(0, 3).map((event, index) => (
+          <CalendarListItem title={event.title} key={`event-${index}`} />
         ))}
       </ul>
       {dayEvents.length > 4 ? (

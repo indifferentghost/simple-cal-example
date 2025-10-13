@@ -32,6 +32,7 @@ export async function parseICS(icsContent: string): Promise<CalendarEvent[]> {
     description?: string;
     location?: string;
     dtstart?: string;
+    url?: string;
   } = {};
   
   for (let i = 0; i < lines.length; i++) {
@@ -51,15 +52,15 @@ export async function parseICS(icsContent: string): Promise<CalendarEvent[]> {
         const date = parseICSDate(currentEvent.dtstart);
         
         events.push({
-          title: currentEvent.title || '',
-          description: currentEvent.description || '',
-          location: currentEvent.location || '',
+          title: currentEvent.title ?? '',
+          description: currentEvent.description ?? '',
+          location: currentEvent.location ?? '',
           date,
           startTime: null, // All-day events
           endTime: null,
           startDateTime: null,
           endDateTime: null,
-          url: ''
+          url: currentEvent.url ?? '',
         });
       }
       
@@ -88,6 +89,8 @@ export async function parseICS(icsContent: string): Promise<CalendarEvent[]> {
         case 'DTSTART':
           currentEvent.dtstart = value;
           break;
+        case 'URL':
+          currentEvent.url = value;
       }
     }
   }
