@@ -44,7 +44,7 @@ export const ShowMoreDialog = ({ events }: { events: CalendarEvent[] }) => {
       <div className="p-3 flex flex-col rounded-xl">
         <div className="flex justify-between items-center mb-5 pb-1.5 border-b border-gray-900 border-dashed">
           <h3 className="text-xl font-bold">All events for {format(events[0].date, 'eeee, MMMM do yyyy')}</h3>
-          <Button className="self-end" onClick={() => ref.current?.close()} variant="outline" size="icon">
+          <Button className="self-end ml-4" onClick={() => ref.current?.close()} variant="outline" size="icon">
             <XIcon size="small" />
             <span className="sr-only">
               Close dialog
@@ -58,8 +58,8 @@ export const ShowMoreDialog = ({ events }: { events: CalendarEvent[] }) => {
         </ul>
       </div>
     </dialog>
-    <Button className="mt-auto" onClick={handleRefClick} variant="ghost" size="sm">
-      Show more
+    <Button className="mt-auto" onClick={handleRefClick} variant="outline" size="sm">
+      Show {events.length - 3} more event{events.length - 3 === 1 ? "" : "s"}
     </Button>
   </>
 }

@@ -1,5 +1,4 @@
-import { eachDayOfInterval, endOfMonth, endOfWeek, format, isSameDay, isToday, startOfMonth, startOfWeek } from "date-fns";
-import { Badge } from "~/components/ui/badge";
+import { eachDayOfInterval, endOfMonth, endOfWeek, format, getDay, isSameDay, isSameMonth, isThisMonth, isToday, startOfMonth, startOfWeek } from "date-fns";
 import { remember } from "@epic-web/remember";
 import { ShowMoreDialog } from "~/components/showMoreDialog";
 
@@ -10,7 +9,7 @@ import { CalendarListItem } from "~/components/calenderListItem";
 
 const useCal = (date = new Date()) => {
   return {
-    days: eachDayOfInterval({ start: startOfMonth(date), end: endOfMonth(date) }),
+    days: eachDayOfInterval({ start: startOfWeek(startOfMonth(date)), end: endOfWeek(endOfMonth(date)) }),
     month: format(date, 'MMMM'),
     year: format(date, 'RRRR')
   } as const;
@@ -56,18 +55,22 @@ export default async function Home() {
     <div className="rounded-xl border border-border bg-card shadow-lg">
       <DaysOfWeek />
       <div className="grid grid-cols-1 gap-px bg-border md:grid-cols-7">
+        {/* {Array.from({ length: getDay(days[0]) }, (_, index) => (
+          <div key={`placeholder-${index}`} className="p-3 md:min-h-[160px] lg:min-h-[200px] lg:p-4 flex flex-col"></div>
+        ))} */}
         {days.map((day, index) => <Calendar day={day} index={index} />)}
       </div>
-    </div>)
+    </div>
+  );
 }
 
 const Calendar = async ({ day, index }: { day: Date, index: number }) => {
-  const dayEvents = await useDailyEvents(day);
+  const dayEvents = isThisMonth(day) ? await useDailyEvents(day) : [];
   const { month, year } = useCal(day)
   return (
     <div
       key={`day-${index}`}
-      className={cn('min-h-[120px] bg-card p-3 md:min-h-[160px] lg:min-h-[200px] lg:p-4 flex flex-col', { "bg-muted/30": !day })}
+      className={cn('min-h-[120px] bg-card p-3 md:min-h-[160px] lg:min-h-[200px] lg:p-4 flex flex-col', { "bg-muted": !isThisMonth(day) })}
       role={day ? "gridcell" : "presentation"}
       aria-label={day ? `${[month]} ${day}, ${year}` : undefined}
     >
@@ -75,18 +78,13 @@ const Calendar = async ({ day, index }: { day: Date, index: number }) => {
         <span
           className={cn(
             'flex h-10 w-10 items-center justify-center rounded-full text-xl font-bold md:h-12 md:w-12 md:text-2xl',
-            isToday(day) ? "bg-primary text-primary-foreground" : "text-foreground"
+            isToday(day) ? "bg-primary text-primary-foreground" : "text-foreground",
+            { 'text-muted-foreground': !isThisMonth(day) }
           )}
         >
           {format(day, 'd')}
         </span>
-        {dayEvents.length > 0 ? (
-          <Badge variant="secondary" className="text-sm font-semibold">
-            {dayEvents.length}
-          </Badge>
-        ) : null}
       </div>
-
 
       <ul className="space-y-1 list-none">
         {dayEvents.slice(0, 3).map((event, index) => (
