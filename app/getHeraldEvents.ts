@@ -1,4 +1,5 @@
 'use server'
+import { parse } from 'date-fns';
 import { CalendarEvent } from './getCalendarEvents';
 
 // export const dynamic = 'force-status'
@@ -7,11 +8,7 @@ import { CalendarEvent } from './getCalendarEvents';
 
 
 function parseICSDate(dateStr: string): Date {
-  // Format: YYYYMMDD (all-day events)
-  const year = parseInt(dateStr.substring(0, 4));
-  const month = parseInt(dateStr.substring(4, 6)) - 1; // JS months are 0-indexed
-  const day = parseInt(dateStr.substring(6, 8));
-  return new Date(year, month, day);
+  return parse(dateStr, "yyyyMMdd'T'HHmmss", new Date())
 }
 
 function unescapeText(text: string): string {
@@ -58,7 +55,7 @@ export async function parseICS(icsContent: string): Promise<CalendarEvent[]> {
           date,
           startTime: null, // All-day events
           endTime: null,
-          startDateTime: null,
+          startDateTime: date,
           endDateTime: null,
           url: currentEvent.url ?? '',
         });

@@ -1,4 +1,4 @@
-import { eachDayOfInterval, endOfMonth, endOfWeek, format, getDay, isSameDay, isSameMonth, isThisMonth, isToday, isWeekend, startOfMonth, startOfWeek } from "date-fns";
+import { eachDayOfInterval, endOfMonth, endOfWeek, format, getDay, isBefore, isEqual, isSameDay, isSameMonth, isThisMonth, isToday, isWeekend, startOfMonth, startOfWeek } from "date-fns";
 import { remember } from "@epic-web/remember";
 import { ShowMoreDialog } from "~/components/showMoreDialog";
 
@@ -84,7 +84,7 @@ export default async function Home() {
   );
 }
 
-const Calendar = async ({ day }: { day: Date, index: number }) => {
+const Calendar = async ({ day }: { day: Date }) => {
   const dayEvents = isThisMonth(day) ? await useDailyEvents(day) : [];
   const { month, year } = useCal(day)
   return (
@@ -109,7 +109,16 @@ const Calendar = async ({ day }: { day: Date, index: number }) => {
       </div>
 
       <ul className="space-y-1 list-none">
-        {dayEvents.slice(0, 3).map((event, index) => (
+        {dayEvents.sort((a, b) => {
+          if (!a.startDateTime) {
+            return b.startDateTime ? 1 : 0
+          }
+          if (!b.startDateTime) {
+            return -1;
+          }
+          if (isEqual(a.startDateTime, b.startDateTime)) return 0;
+          return isBefore(a.startDateTime, b.startDateTime) ? -1 : 1
+        }).slice(0, 3).map((event, index) => (
           <CalendarListItem startTime={event.startDateTime} url={event.url} title={event.title} key={`event-${index}`} />
         ))}
       </ul>

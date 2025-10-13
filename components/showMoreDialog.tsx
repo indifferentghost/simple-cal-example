@@ -3,7 +3,7 @@ import { XIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { CalendarEvent } from "~/app/getCalendarEvents";
 import { useCallback, useEffect, useRef } from "react";
-import { format } from "date-fns";
+import { format, isBefore, isEqual } from "date-fns";
 import { CalendarListItem } from "./calenderListItem";
 
 export const ShowMoreDialog = ({ events }: { events: CalendarEvent[] }) => {
@@ -52,8 +52,17 @@ export const ShowMoreDialog = ({ events }: { events: CalendarEvent[] }) => {
           </Button>
         </div>
         <ul className="space-y-0.5">
-          {events.map((event, index) => (
-            <CalendarListItem url={event.url} title={event.title} key={`more-${index}`} />
+          {events.sort((a, b) => {
+            if (!a.startDateTime) {
+              return b.startDateTime ? 1 : 0
+            }
+            if (!b.startDateTime) {
+              return -1;
+            }
+            if (isEqual(a.startDateTime, b.startDateTime)) return 0;
+            return isBefore(a.startDateTime, b.startDateTime) ? -1 : 1
+          }).map((event, index) => (
+            <CalendarListItem startTime={event.startDateTime} url={event.url} title={event.title} key={`more-${index}`} />
           ))}
         </ul>
       </div>
