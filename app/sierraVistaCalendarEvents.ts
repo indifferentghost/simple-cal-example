@@ -6,137 +6,115 @@ import { CalendarEvent } from "./getCalendarEvents";
 // export const revalidate = false
 // export const fetchCache = 'force-cache'
 
-async function fetchEventDetails(url: string): Promise<CalendarEvent> {
-  const response = await fetch(url);
-  const html = await response.text();
-  const $ = cheerio.load(html);
+// async function fetchEventDetails(url: string): Promise<CalendarEvent> {
+//   const response = await fetch(url);
+//   const html = await response.text();
+//   const $ = cheerio.load(html);
 
-  const description = $('div.detail-content span[itemprop="description"]')
-    .text().trim();
+//   const description = $('div.detail-content span[itemprop="description"]')
+//     .text().trim();
 
-  const locationName = $('span[itemprop="location"] span[itemprop="name"]')
-    .text().trim();
-  const locationAddress = $('span[itemprop="address"]').text().trim().replace(
-    /\s+/g,
-    " ",
-  );
-  const location = locationAddress
-    ? `${locationName}, ${locationAddress}`
-    : locationName;
+//   const locationName = $('span[itemprop="location"] span[itemprop="name"]')
+//     .text().trim();
+//   const locationAddress = $('span[itemprop="address"]').text().trim().replace(
+//     /\s+/g,
+//     " ",
+//   );
+//   const location = locationAddress
+//     ? `${locationName}, ${locationAddress}`
+//     : locationName;
 
-  // Extract date and time from detail page
-  const dateTimeText = $(".detail-list-value").first().text().trim();
-  const dateTimeMatch = dateTimeText.match(
-    /(\d{2}\/\d{2}\/\d{4})\s+(\d{1,2}:\d{2}\s+(?:AM|PM))/,
-  );
+//   // Extract date and time from detail page
+//   const dateTimeText = $(".detail-list-value").first().text().trim();
+//   const dateTimeMatch = dateTimeText.match(
+//     /(\d{2}\/\d{2}\/\d{4})\s+(\d{1,2}:\d{2}\s+(?:AM|PM))/,
+//   );
 
-  let startDateTime: Date | null = null;
+//   let startDateTime: Date | null = null;
 
-  if (!dateTimeMatch) {
-    throw new Error("Unable to find date and time");
-  }
-  const [, dateStr, startTime] = dateTimeMatch;
-  const date = parse(dateStr, "MM/dd/yyyy", new Date());
-  startDateTime = parse(
-    `${dateStr} ${startTime}`,
-    "MM/dd/yyyy h:mm a",
-    new Date(),
-  );
+//   if (!dateTimeMatch) {
+//     throw new Error("Unable to find date and time");
+//   }
+//   const [, dateStr, startTime] = dateTimeMatch;
+//   const date = parse(dateStr, "MM/dd/yyyy", new Date());
+//   startDateTime = parse(
+//     `${dateStr} ${startTime}`,
+//     "MM/dd/yyyy h:mm a",
+//     new Date(),
+//   );
 
-  return {
-    description,
-    location,
-    date,
-    startTime,
-    endTime: null,
-    title: "",
-    endDateTime: null,
-    url,
-    startDateTime,
-    source: 'none'
-  };
-}
+//   return {
+//     description,
+//     location,
+//     date,
+//     startTime,
+//     endTime: null,
+//     title: "",
+//     endDateTime: null,
+//     url,
+//     startDateTime,
+//     source: "none",
+//   };
+// }
 
 export async function scrapeCalendar(): Promise<CalendarEvent[]> {
-  return [];
-  // const baseUrl = "https://www.sierravistaaz.gov";
-  // const calendarUrl = `${baseUrl}/our-city/calendar`;
+  const baseUrl = "https://www.sierravistaaz.gov";
+  const calendarUrl = "/our-city/calendar";
 
-  // try {
-  //   const response = await fetch(calendarUrl);
-  //   const html = await response.text();
-  //   const $ = cheerio.load(html);
-  //   const events: CalendarEvent[] = [];
+  const response = await fetch(new URL(calendarUrl, baseUrl), { cache: 'force-cache' });
+  const html = await response.text();
+  const $ = cheerio.load(html);
+  const events: CalendarEvent[] = [];
 
-  //   // Extract month and year from calendar header
-  //   const calendarHeader = $(".calendar_month, .calendar_header, h2, h1")
-  //     .text();
-  //   const monthYearMatch = calendarHeader.match(/(\w+)\s+(\d{4})/);
-  //   const currentYear = monthYearMatch
-  //     ? parseInt(monthYearMatch[2])
-  //     : new Date().getFullYear();
-  //   const currentMonth = monthYearMatch
-  //     ? parse(monthYearMatch[1], "MMMM", new Date()).getMonth()
-  //     : new Date().getMonth();
+  // Extract month and year from calendar header
+  const calendarHeader = $(".current_month_title")
+    .text().trim();
 
-  //   // Find all calendar day cells with events
-  //   $(".calendar_day_with_items").each((_, dayCell) => {
-  //     const $dayCell = $(dayCell);
+  const [currentMonth, currentYear] = calendarHeader.split(" ");
 
-  //     const dayNumber = parseInt($dayCell.contents().first().text().trim());
-  //     if (isNaN(dayNumber)) return;
+  // Find all calendar day cells with events
+  $(".calendar_day_with_items").each((_, dayCell) => {
+    const $dayCell = $(dayCell);
 
-  //     const date = new Date(currentYear, currentMonth, dayNumber);
+    const dayNumber = parseInt($dayCell.contents().first().text().trim());
+    if (isNaN(dayNumber)) return;
 
-  //     // Process each event in this day
-  //     $dayCell.find(".calendar_item").each((_, item) => {
-  //       const $item = $(item);
+    const date = parse(
+      `${currentYear} ${currentMonth} ${dayNumber}`,
+      "yyyy MMMM d",
+      new Date(),
+    );
 
-  //       const startTime = $item.find(".calendar_eventtime").text().trim();
-  //       const $link = $item.find(".calendar_eventlink");
-  //       const title = $link.attr("title") || $link.text().trim();
-  //       const relativeUrl = $link.attr("href");
+    // Process each event in this day
+    $dayCell.find(".calendar_item").each((_, item) => {
+      const $item = $(item);
 
-  //       if (!title || !relativeUrl) return;
+      const startTime = $item.find(".calendar_eventtime").text().trim();
+      const $link = $item.find(".calendar_eventlink");
+      const title = $link.attr("title") ?? $link.text().trim();
+      const relativeUrl = $link.attr("href");
 
-  //       const url = relativeUrl.startsWith("http")
-  //         ? relativeUrl
-  //         : `${baseUrl}${relativeUrl}`;
+      if (!title || !relativeUrl) return;
 
-  //       events.push({
-  //         title,
-  //         description: "",
-  //         location: "",
-  //         date,
-  //         startTime: startTime || null,
-  //         endTime: null,
-  //         startDateTime: null,
-  //         endDateTime: null,
-  //         url,
-  //       });
-  //     });
-  //   });
+      const url = relativeUrl.startsWith("http")
+        ? relativeUrl
+        : new URL(relativeUrl, baseUrl).toString();
 
-  //   // Fetch details for each event
-  //   for (const event of events) {
-  //     try {
-  //       const details = await fetchEventDetails(event.url);
-  //       event.description = details.description || "";
-  //       event.location = details.location || "";
+      events.push({
+        title,
+        description: "",
+        location: "",
+        date,
+        startTime,
+        endTime: null,
+        startDateTime: parse(startTime, 'p', date),
+        endDateTime: null,
+        url,
+      });
+    });
+  });
 
-  //       // Override with more accurate date/time from detail page
-  //       if (details.date) event.date = details.date;
-  //       if (details.startTime) event.startTime = details.startTime;
-  //       if (details.startDateTime) event.startDateTime = details.startDateTime;
-  //     } catch (e) {
-  //       console.log(`couldn't parse ${event.url} ${event.title}`, (e as Error).message);
-  //       continue;
-  //     }
-  //   }
+  console.log('total events found for sierra vista calendar:', events.length);
 
-  //   return events;
-  // } catch (error) {
-  //   console.error("Error scraping calendar:", error);
-  //   throw error;
-  // }
+  return events;
 }

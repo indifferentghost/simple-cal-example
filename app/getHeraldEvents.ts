@@ -99,7 +99,7 @@ export async function parseICS(icsContent: string): Promise<CalendarEvent[]> {
 }
 
 export async function fetchAndParseICS(url: string): Promise<CalendarEvent[]> {
-  const response = await fetch(url);
+  const response = await fetch(url, { cache: 'force-cache' });
   const icsContent = await response.text();
   return parseICS(icsContent);
 }

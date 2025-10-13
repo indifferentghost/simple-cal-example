@@ -6,6 +6,7 @@ import { getCalendarEvents } from "./getCalendarEvents";
 import { fetchAndParseICS } from "./getHeraldEvents";
 import { cn } from "~/lib/utils";
 import { CalendarListItem } from "~/components/calenderListItem";
+import { scrapeCalendar } from "./sierraVistaCalendarEvents";
 
 const useCal = (date = new Date()) => {
   return {
@@ -20,7 +21,8 @@ const getEvents = async () => {
     const [...events] = await Promise.all([
       getCalendarEvents(),
       getCalendarEvents('bisbee'),
-      fetchAndParseICS('https://timelyapp.time.ly/api/calendars/54738062/export?format=ics&target=copy')
+      fetchAndParseICS('https://timelyapp.time.ly/api/calendars/54738062/export?format=ics&target=copy'),
+      scrapeCalendar()
     ]);
 
     return events.flat();
@@ -48,41 +50,58 @@ const DaysOfWeek = () => (
 );
 
 
+const eventSources = [
+  { title: 'Calendar - Cochise County, AZ', url: 'https://www.cochise.az.gov/calendar.aspx' },
+  { title: 'Calendar - Bisbee, AZ', url: 'https://www.bisbeeaz.gov/calendar.aspx' },
+  { title: 'Local Events Calendar for The Sierra Vista Herald', url: 'https://www.myheraldreview.com/calendar/' },
+  { title: 'Calendar | City of Sierra Vista, AZ', url: 'https://www.sierravistaaz.gov/our-city/calendar' }
+] as const;
+
 export default async function Home() {
   const { days } = useCal();
 
   return (
-    <div className="rounded-xl border border-border bg-card shadow-lg">
-      <DaysOfWeek />
-      <div className="grid grid-cols-1 gap-px bg-border md:grid-cols-7">
-        {/* {Array.from({ length: getDay(days[0]) }, (_, index) => (
-          <div key={`placeholder-${index}`} className="p-3 md:min-h-[160px] lg:min-h-[200px] lg:p-4 flex flex-col"></div>
-        ))} */}
-        {days.map((day, index) => <Calendar day={day} index={index} />)}
+    <>
+      <div className="rounded-xl border border-border bg-card shadow-lg">
+        <DaysOfWeek />
+        <div className="grid grid-cols-1 gap-px bg-border md:grid-cols-7">
+          {days.map((day, index) => <Calendar key={`day-${index}`} day={day} />)}
+        </div>
       </div>
-    </div>
+      <div className="text-sm text-muted-foreground m-3 border border-dashed border-muted-foreground p-2 ">
+        Events sourced from:
+        <ul className="list-inside list-disc">
+          {eventSources.map(({ title, url }) => (
+            <li>
+              <a href={url} className="hover:underline visited:text-purple-900">
+                {title}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </>
   );
 }
 
-const Calendar = async ({ day, index }: { day: Date, index: number }) => {
+const Calendar = async ({ day }: { day: Date, index: number }) => {
   const dayEvents = isThisMonth(day) ? await useDailyEvents(day) : [];
   const { month, year } = useCal(day)
   return (
     <div
-      key={`day-${index}`}
-      className={cn('min-h-[120px] bg-card p-3 md:min-h-[160px] lg:min-h-[200px] lg:p-4 flex flex-col',{ "bg-muted": !isThisMonth(day) })}
+      className={cn('min-h-[120px] bg-card p-3 md:min-h-[160px] lg:min-h-[200px] lg:p-4 flex flex-col', { "bg-muted": !isThisMonth(day) })}
       role={day ? "gridcell" : "presentation"}
       aria-label={day ? `${[month]} ${day}, ${year}` : undefined}
     >
       <div className="mb-3 flex items-center justify-between">
         <span
           className={cn(
-            'flex h-10 w-10 items-center justify-center rounded-full text-xl font-bold md:h-12 md:w-12 md:text-2xl',
-            isToday(day) ? "bg-primary text-primary-foreground" : "text-foreground",
-            { 
+            'text-foreground flex h-10 w-10 items-center justify-center rounded-full text-xl font-bold md:h-12 md:w-12 md:text-2xl',
+            {
               'text-muted-foreground': !isThisMonth(day),
-              'text-secondary-foreground': isWeekend(day)
-            }
+              'text-secondary-foreground': isWeekend(day),
+              'bg-primary text-primary-foreground': isToday(day)
+            },
           )}
         >
           {format(day, 'd')}
@@ -91,7 +110,7 @@ const Calendar = async ({ day, index }: { day: Date, index: number }) => {
 
       <ul className="space-y-1 list-none">
         {dayEvents.slice(0, 3).map((event, index) => (
-          <CalendarListItem url={event.url} title={event.title} key={`event-${index}`} />
+          <CalendarListItem startTime={event.startDateTime} url={event.url} title={event.title} key={`event-${index}`} />
         ))}
       </ul>
       {dayEvents.length > 3 ? (
