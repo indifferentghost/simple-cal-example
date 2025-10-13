@@ -70,7 +70,7 @@ const Calendar = async ({ day, index }: { day: Date, index: number }) => {
   return (
     <div
       key={`day-${index}`}
-      className={cn('min-h-[120px] bg-card p-3 md:min-h-[160px] lg:min-h-[200px] lg:p-4 flex flex-col', { "bg-muted": !isThisMonth(day) })}
+      className={cn('min-h-[120px] bg-card p-3 md:min-h-[160px] lg:min-h-[200px] lg:p-4 flex flex-col',{ "bg-muted": !isThisMonth(day) })}
       role={day ? "gridcell" : "presentation"}
       aria-label={day ? `${[month]} ${day}, ${year}` : undefined}
     >
@@ -79,7 +79,10 @@ const Calendar = async ({ day, index }: { day: Date, index: number }) => {
           className={cn(
             'flex h-10 w-10 items-center justify-center rounded-full text-xl font-bold md:h-12 md:w-12 md:text-2xl',
             isToday(day) ? "bg-primary text-primary-foreground" : "text-foreground",
-            { 'text-muted-foreground': !isThisMonth(day) }
+            { 
+              'text-muted-foreground': !isThisMonth(day),
+              'text-secondary-foreground': isWeekend(day)
+            }
           )}
         >
           {format(day, 'd')}
