@@ -1,4 +1,4 @@
-import { eachDayOfInterval, endOfMonth, endOfWeek, format, getDay, isSameDay, isSameMonth, isThisMonth, isToday, startOfMonth, startOfWeek } from "date-fns";
+import { eachDayOfInterval, endOfMonth, endOfWeek, format, getDay, isSameDay, isSameMonth, isThisMonth, isToday, isWeekend, startOfMonth, startOfWeek } from "date-fns";
 import { remember } from "@epic-web/remember";
 import { ShowMoreDialog } from "~/components/showMoreDialog";
 
@@ -36,9 +36,9 @@ const useDailyEvents = async (day: Date) => {
 const dayNames = ((date = new Date()) => eachDayOfInterval({ start: startOfWeek(date), end: endOfWeek(date) }).map((date) => format(date, 'EEEE')))()
 
 const DaysOfWeek = () => (
-  <div className="grid grid-cols-1 gap-px border-b border-border bg-border md:grid-cols-7">
+  <div className="grid grid-cols-1 gap-px border-b-2 border-ring bg-border md:grid-cols-7">
     {dayNames.map(day => (
-      <div key={day} className="bg-muted px-4 py-4 text-center font-semibold text-muted-foreground md:py-6">
+      <div key={day} className={cn("px-4 py-4 text-center font-semibold md:py-6", ['Sunday', 'Saturday'].includes(day) ? 'bg-blue-200 text-secondary-foreground' : 'bg-muted text-muted-foreground')}>
         <span className="text-base md:text-lg lg:text-xl" aria-label={day}>
           {day}
         </span>
