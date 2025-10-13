@@ -10,7 +10,7 @@ import { parse, setHours, setMinutes } from 'date-fns';
 // Available RSS feeds
 export const RSS_FEEDS = {
   cochise: 'https://www.cochise.az.gov/RSSFeed.aspx?ModID=58&CID=All-calendar.xml',
-  bisbee: 'https://www.bisbeeaz.gov/RSSFeed.aspx?ModID=1&CID=All-calendar.xml',
+  bisbee: 'https://www.bisbeeaz.gov/RSSFeed.aspx?ModID=58&CID=All-calendar.xml',
 } as const;
 
 export type FeedSource = keyof typeof RSS_FEEDS;
@@ -120,6 +120,8 @@ export async function parseRSSToEvents(
     const eventDate = item['calendarEvent:EventDates']?.[0]?.trim() || '';
     const eventTimes = item['calendarEvent:EventTimes']?.[0]?.trim() || '';
     const location = item['calendarEvent:Location']?.[0]?.trim() || '';
+
+    if (!eventDate) return;
     
     const times = parseTime(eventTimes);
     
@@ -158,6 +160,7 @@ export async function getCalendarEvents(
   
   const xmlText = await fetchRSSFeed(url);
   const events = await parseRSSToEvents(xmlText, source);
+  console.log(`total events for ${feedSource}: ${events.length}`);
   return events;
 }
 

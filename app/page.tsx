@@ -22,7 +22,7 @@ const getEvents = async () => {
       getCalendarEvents(),
       getCalendarEvents('bisbee'),
       fetchAndParseICS('https://timelyapp.time.ly/api/calendars/54738062/export?format=ics&target=copy')
-    ])
+    ]);
 
     return events.flat();
   });
@@ -93,7 +93,7 @@ const Calendar = async ({ day, index }: { day: Date, index: number }) => {
           <CalendarListItem title={event.title} key={`event-${index}`} />
         ))}
       </ul>
-      {dayEvents.length > 4 ? (
+      {dayEvents.length > 3 ? (
         <ShowMoreDialog events={dayEvents} />
       ) : null}
     </div>
